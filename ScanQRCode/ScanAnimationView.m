@@ -2,8 +2,8 @@
 //  ScanAnimationView.m
 //  ScanQRCode
 //
-//  Created by JuLong on 14-7-30.
-//  Copyright (c) 2014年 julong. All rights reserved.
+//  Created by Darren Xie on 14-7-30.
+//  Copyright (c) 2014年 Darren Xie. All rights reserved.
 //
 
 #import "ScanAnimationView.h"
@@ -15,6 +15,7 @@
 @interface ScanAnimationView() {
     CALayer *scanLineLayer_;
 }
+@property (assign, nonatomic) CGRect scanFrame;
 
 @end
 
@@ -22,7 +23,6 @@
 
 - (id)initWithFrame:(CGRect)frame
 {
-    NSLog(@"init with frame...");
     self = [super initWithFrame:frame];
     if (self) {
         [self commonInit];
@@ -32,36 +32,29 @@
 
 - (void)commonInit {
     self.backgroundColor = [UIColor clearColor];
-    CGRect tmpFocusBounds;
     
-    float scanWidth = SCREEN_WIDTH  * 2.0f / 3.0f;
-    tmpFocusBounds = CGRectMake(0, 0, scanWidth, scanWidth);
+    float scanFrameWidth  = SCREEN_WIDTH  * 2.0f / 3.0f;
+    float scanFrameheight = SCREEN_WIDTH  * 2.0f / 3.0f;
     CGRect bounds = self.bounds;
-    tmpFocusBounds.size.width = MIN(bounds.size.width, tmpFocusBounds.size.width);
-    tmpFocusBounds.size.height = MIN(bounds.size.height, tmpFocusBounds.size.height);
-    tmpFocusBounds.origin.x = 0.5 * (bounds.size.width - tmpFocusBounds.size.width);
-    tmpFocusBounds.origin.y = 0.5 * (bounds.size.height - tmpFocusBounds.size.height);
     
-    CGPoint scanLineStartPosition;
-    scanLineStartPosition = CGPointMake(CGRectGetMidX(tmpFocusBounds), CGRectGetMinY(tmpFocusBounds));
+    CGRect scanFrame = CGRectMake((bounds.size.width - scanFrameWidth) / 2.0f, (bounds.size.height - scanFrameheight) / 2.0f, scanFrameWidth, scanFrameheight);
+
     scanLineLayer_ = [CALayer layer];
-    scanLineLayer_.frame = CGRectMake(0, 0, tmpFocusBounds.size.width - 10, 12);
+    scanLineLayer_.frame = CGRectMake(0, 0, scanFrame.size.width - 10, 12);
     scanLineLayer_.contents = (id)[UIImage imageNamed:@"QRScanLine"].CGImage;
-    scanLineLayer_.position = scanLineStartPosition;
+    scanLineLayer_.position = CGPointMake(CGRectGetMidX(scanFrame), CGRectGetMinY(scanFrame));;
     
     [self.layer addSublayer:scanLineLayer_];
-    self.foucsBounds = tmpFocusBounds;
-    [self addScanLineAnimation];
-
+    self.scanFrame = scanFrame;
 }
 
-- (void)addScanLineAnimation
+- (void)startScanAnimation
 {
-    [self stopScanLineAnimation];
-    CGRect tmpFocusBounds = self.foucsBounds;
+    [self stopScanAnimation];
+
     CGPoint scanLineStartPosition, scanLineEndPosition;
-    scanLineStartPosition = CGPointMake(CGRectGetMidX(tmpFocusBounds), CGRectGetMinY(tmpFocusBounds));
-    scanLineEndPosition = CGPointMake(CGRectGetMidX(tmpFocusBounds), CGRectGetMaxY(tmpFocusBounds));
+    scanLineStartPosition = CGPointMake(CGRectGetMidX(self.scanFrame), CGRectGetMinY(self.scanFrame));
+    scanLineEndPosition = CGPointMake(CGRectGetMidX(self.scanFrame), CGRectGetMaxY(self.scanFrame));
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:kAnimationKeyPath];
     [animation setFromValue:[NSValue valueWithCGPoint:scanLineStartPosition]];
     [animation setToValue:[NSValue valueWithCGPoint:scanLineEndPosition]];
@@ -70,7 +63,7 @@
     [scanLineLayer_ addAnimation:animation forKey:kAnimationKeyPath];
 }
 
-- (void)stopScanLineAnimation
+- (void)stopScanAnimation
 {
     if ([scanLineLayer_ animationForKey:kAnimationKeyPath]) {
         [scanLineLayer_ removeAnimationForKey:kAnimationKeyPath];
@@ -89,16 +82,16 @@
     
     UIColor *clearColor = [UIColor clearColor];
     [clearColor set];
-    UIRectFill(self.foucsBounds);
+    UIRectFill(self.scanFrame);
     
     //画边框
     CGContextSetStrokeColorWithColor(context, [UIColor whiteColor].CGColor);
-    CGContextStrokeRectWithWidth(context, CGRectInset(self.foucsBounds, -1, -1), 1.0);
+    CGContextStrokeRectWithWidth(context, CGRectInset(self.scanFrame, -1, -1), 1.0);
     
-    CGPoint leftUp = self.foucsBounds.origin;
-    CGPoint rightUp = CGPointMake(CGRectGetMaxX(self.foucsBounds), leftUp.y);
-    CGPoint rightDown = CGPointMake(rightUp.x, CGRectGetMaxY(self.foucsBounds));
-    
+    //画边角
+    CGPoint leftUp = self.scanFrame.origin;
+    CGPoint rightUp = CGPointMake(CGRectGetMaxX(self.scanFrame), leftUp.y);
+    CGPoint rightDown = CGPointMake(rightUp.x, CGRectGetMaxY(self.scanFrame));
     //左上角
     CGMutablePathRef path = CGPathCreateMutable();
     CGPathMoveToPoint(path, NULL, leftUp.x, leftUp.y + kCornerLength);

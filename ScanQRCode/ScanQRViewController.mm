@@ -2,8 +2,8 @@
 //  ScanQRViewController.m
 //  ScanQRCode
 //
-//  Created by JuLong on 14-7-29.
-//  Copyright (c) 2014年 julong. All rights reserved.
+//  Created by Darren Xie on 14-7-29.
+//  Copyright (c) 2014年 Darren Xie. All rights reserved.
 //
 
 #import "ScanQRViewController.h"
@@ -18,12 +18,12 @@
 
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *captureVideoPreviewLayer;
 @property (nonatomic, strong) AVCaptureSession *captureSession;
-@property (nonatomic, assign) BOOL isScanning;
 @property (nonatomic, strong) ScanAnimationView *scanAnimationView;
 
 @end
 
 @implementation ScanQRViewController
+@synthesize delegate = _delegate;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -40,6 +40,7 @@
     
     [self initCapture];
     
+    //添加动画
     if (self.scanAnimationView == nil) {
         
         self.scanAnimationView = [[ScanAnimationView alloc] initWithFrame:self.view.bounds];
@@ -48,11 +49,12 @@
     }
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    [self.scanAnimationView addScanLineAnimation];
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self.scanAnimationView startScanAnimation];
 }
 
+//初始化扫描
 - (void)initCapture {
     
     if (self.captureSession == nil) {
@@ -98,10 +100,10 @@
     self.captureVideoPreviewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     [self.view.layer addSublayer:self.captureVideoPreviewLayer];
     
-    self.isScanning = YES;
     [self.captureSession startRunning];
 }
 
+//生成图片
 - (UIImage *)imageFromSampleBuffer:(CMSampleBufferRef)sampleBuffer {
     
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
@@ -132,6 +134,7 @@
     return image;
 }
 
+//图片解码
 - (void)decodeImage:(UIImage *)image {
     NSMutableSet *qrReader = [[NSMutableSet alloc] init];
     QRCodeReader *qrcoderReader = [[QRCodeReader alloc] init];
@@ -141,23 +144,22 @@
     decoder.delegate = self;
     decoder.readers = qrReader;
     [decoder decodeImage:image];
-    
 }
 
 #pragma mark - AVCaptureVideoDataOutputSampleBufferDelegate
 
+//扫描产生的数据
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
     UIImage *image = [self imageFromSampleBuffer:sampleBuffer];
     [self decodeImage:image];
 }
 
 
-
 #pragma mark - DecoderDelegate
 
+//图片解码的结果
 - (void)decoder:(Decoder *)decoder didDecodeImage:(UIImage *)image usingSubset:(UIImage *)subset withResult:(TwoDDecoderResult *)result {
     NSLog(@"result = %@", result.text);
-    self.isScanning = NO;
     [self.captureSession stopRunning];
     if (_delegate && [_delegate respondsToSelector:@selector(scanQRViewController:didScanResult:)]) {
         [self.delegate scanQRViewController:self didScanResult:result.text];
@@ -172,7 +174,8 @@
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-    [self.captureSession stopRunning  ];
+    [self.captureSession stopRunning];
+    [self.scanAnimationView stopScanAnimation];
 }
 
 - (void)didReceiveMemoryWarning
@@ -181,15 +184,12 @@
     // Dispose of any resources that can be recreated.
 }
 
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+- (void)dealloc {
+    _delegate = nil;
+    _captureVideoPreviewLayer = nil;
+    _captureSession = nil;
+    _scanAnimationView = nil;
 }
-*/
+
 
 @end

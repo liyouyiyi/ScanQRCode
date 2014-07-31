@@ -2,8 +2,8 @@
 //  Constant.h
 //  ScanQRCode
 //
-//  Created by JuLong on 14-7-29.
-//  Copyright (c) 2014年 julong. All rights reserved.
+//  Created by Darren Xie on 14-7-29.
+//  Copyright (c) 2014年 Darren Xie. All rights reserved.
 //
 
 #ifndef ScanQRCode_Constants_h

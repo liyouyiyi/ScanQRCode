@@ -2,8 +2,8 @@
 //  AppDelegate.m
 //  ScanQRCode
 //
-//  Created by JuLong on 14-7-29.
-//  Copyright (c) 2014年 julong. All rights reserved.
+//  Created by Darren Xie on 14-7-29.
+//  Copyright (c) 2014年 Darren Xie. All rights reserved.
 //
 
 #import "AppDelegate.h"
